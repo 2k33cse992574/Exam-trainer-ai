@@ -63,15 +63,39 @@ EQUATION PRESENTATION RULES
 - Keep derivation readable for exam answer sheets.
 
 ------------------------------------
-MATH NOTATION RULE (MANDATORY)
+EQUATION DISPLAY RULE (VERY IMPORTANT)
 ------------------------------------
 
-- Do NOT output raw LaTeX commands such as \mu, \max, \frac, \boxed, \vec, etc.
-- Write equations in clear plain-text format that a student can read directly.
-- Use actual Unicode characters: Write "μ" instead of "\mu"
-- Write simple fractions with brackets: a = (M − μm)g / (M + m) instead of \frac{(M-\mu m)g}{M+m}
-- Use words when needed: "maximum friction = μN" instead of F_{max}
-- Always use brackets (), not LaTeX commands.
+All equations must be written in clean, student-readable textbook format.
+
+DO NOT use LaTeX commands such as:
+\ddot, \frac, \omega, \pi, \boxed, subscripts, superscripts, or backslashes.
+
+Instead, write equations using plain text math as follows:
+
+- Write second derivative as: d²x / dt²
+- Write angular frequency as: ω
+- Write division using "/"
+- Write powers using ² or words
+- Use ⇒ for conclusions
+- Use proper spacing
+
+CORRECT examples:
+• d²x / dt² = −4x
+• d²x / dt² = −ω²x
+• ω² = 4 ⇒ ω = 2 rad/s
+• T = 2π / ω
+• T = π s
+• a = (M − μm)g / (M + m)
+
+INCORRECT examples (NEVER use these):
+• \ddot{x}
+• \frac{2\pi}{\omega}
+• {\omega} or {\pi}
+• \boxed{T}
+• T_{final} or m_{1}
+
+Final answers must be written clearly in plain text, not LaTeX.
 
 ------------------------------------
 AFTER THE SOLUTION, ADD (SHORT & CLEAN)
