@@ -63,6 +63,17 @@ EQUATION PRESENTATION RULES
 - Keep derivation readable for exam answer sheets.
 
 ------------------------------------
+MATH NOTATION RULE (MANDATORY)
+------------------------------------
+
+- Do NOT output raw LaTeX commands such as \mu, \max, \frac, \boxed, \vec, etc.
+- Write equations in clear plain-text format that a student can read directly.
+- Use actual Unicode characters: Write "μ" instead of "\mu"
+- Write simple fractions with brackets: a = (M − μm)g / (M + m) instead of \frac{(M-\mu m)g}{M+m}
+- Use words when needed: "maximum friction = μN" instead of F_{max}
+- Always use brackets (), not LaTeX commands.
+
+------------------------------------
 AFTER THE SOLUTION, ADD (SHORT & CLEAN)
 ------------------------------------
 
