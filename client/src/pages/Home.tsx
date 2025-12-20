@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStartSession } from "@/hooks/use-academic";
+import { useUserContext } from "@/hooks/use-user-context";
 import { useLocation } from "wouter";
-import { Loader2, ArrowRight, BookOpen, Zap, Search } from "lucide-react";
+import { Loader2, ArrowRight, BookOpen, Zap, Search, Settings } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   Select,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { SettingsModal } from "@/components/SettingsModal";
 
 type Exam = "JEE" | "NEET" | "SSC" | "AKTU" | "GATE" | "CAT";
 type StudyMode = "Follow Roadmap" | "Make Roadmap" | "Random Search";
@@ -30,23 +32,42 @@ const MODE_DESCRIPTIONS: Record<StudyMode, string> = {
 };
 
 export default function Home() {
-  const [step, setStep] = useState<"onboarding" | "workspace">("onboarding");
+  const { context, hasOnboarded, isLoading, saveContext, updateContext } = useUserContext();
   const [exam, setExam] = useState<Exam | "">("");
   const [target, setTarget] = useState<"year" | "time">("year");
   const [targetValue, setTargetValue] = useState("");
   const [studyMode, setStudyMode] = useState<StudyMode | "">("");
   const [query, setQuery] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
   const [, setLocation] = useLocation();
   const { mutate: startSession, isPending } = useStartSession();
 
-  const handleContinue = () => {
+  // Initialize from context or show onboarding
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (context && hasOnboarded) {
+      // User has completed onboarding, restore context
+      setExam(context.exam);
+      setTargetValue(context.target);
+      setStudyMode(context.mode);
+      setTarget(TARGET_YEARS.includes(context.target) ? "year" : "time");
+    }
+  }, [context, hasOnboarded, isLoading]);
+
+  const handleContinueOnboarding = () => {
     if (!exam || !targetValue || !studyMode) return;
-    setStep("workspace");
+
+    saveContext({
+      exam: exam as Exam,
+      target: targetValue,
+      mode: studyMode as StudyMode,
+    });
   };
 
   const handleStartSession = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim() || !exam || !targetValue || !studyMode) return;
 
     const contextPayload = {
       exam: exam as Exam,
@@ -68,14 +89,32 @@ export default function Home() {
     });
   };
 
-  const canContinue = exam && targetValue && studyMode;
-  const canStart = query.trim() && !isPending;
+  const handleSaveSettings = (newContext: any) => {
+    setExam(newContext.exam);
+    setTargetValue(newContext.target);
+    setStudyMode(newContext.mode);
+    setTarget(TARGET_YEARS.includes(newContext.target) ? "year" : "time");
+    updateContext(newContext);
+  };
 
-  // Onboarding screen
-  if (step === "onboarding") {
+  if (isLoading) {
     return (
       <Layout>
-        <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 max-w-4xl mx-auto w-full">
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </Layout>
+    );
+  }
+
+  const canContinueOnboarding = exam && targetValue && studyMode;
+  const canStart = query.trim() && !isPending;
+
+  // First-time onboarding screen
+  if (!hasOnboarded || !context) {
+    return (
+      <Layout>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 max-w-4xl mx-auto w-full overflow-y-auto">
           {/* Header */}
           <div className="text-center space-y-3 mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-mono tracking-tight text-foreground">
@@ -94,7 +133,10 @@ export default function Home() {
                 Step 1: Select your exam
               </Label>
               <Select value={exam} onValueChange={(value) => setExam(value as Exam)}>
-                <SelectTrigger id="exam-select" className="h-12 px-4 text-base border-border bg-background">
+                <SelectTrigger
+                  id="exam-select"
+                  className="h-12 px-4 text-base border-border bg-background"
+                >
                   <SelectValue placeholder="Choose your exam..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,11 +156,20 @@ export default function Home() {
               </Label>
               <div className="flex gap-4">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="target-type" className="text-sm text-muted-foreground">
+                  <Label
+                    htmlFor="target-type"
+                    className="text-sm text-muted-foreground"
+                  >
                     Type
                   </Label>
-                  <Select value={target} onValueChange={(value: any) => setTarget(value)}>
-                    <SelectTrigger id="target-type" className="h-10 px-3 text-sm bg-background border-border">
+                  <Select
+                    value={target}
+                    onValueChange={(value: any) => setTarget(value)}
+                  >
+                    <SelectTrigger
+                      id="target-type"
+                      className="h-10 px-3 text-sm bg-background border-border"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -128,11 +179,17 @@ export default function Home() {
                   </Select>
                 </div>
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="target-value" className="text-sm text-muted-foreground">
+                  <Label
+                    htmlFor="target-value"
+                    className="text-sm text-muted-foreground"
+                  >
                     Value
                   </Label>
                   <Select value={targetValue} onValueChange={setTargetValue}>
-                    <SelectTrigger id="target-value" className="h-10 px-3 text-sm bg-background border-border">
+                    <SelectTrigger
+                      id="target-value"
+                      className="h-10 px-3 text-sm bg-background border-border"
+                    >
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -158,32 +215,43 @@ export default function Home() {
               <Label className="text-base font-mono font-semibold">
                 Step 3: Choose how you want to study
               </Label>
-              <RadioGroup value={studyMode} onValueChange={(value: any) => setStudyMode(value)}>
+              <RadioGroup
+                value={studyMode}
+                onValueChange={(value: any) => setStudyMode(value)}
+              >
                 <div className="space-y-3">
-                  {(["Follow Roadmap", "Make Roadmap", "Random Search"] as StudyMode[]).map(
-                    (mode) => (
-                      <label
-                        key={mode}
-                        className="flex items-start gap-4 p-4 rounded-lg border border-border bg-background cursor-pointer hover:bg-secondary/30 hover:border-primary/50 transition-all"
-                      >
-                        <RadioGroupItem value={mode} id={`mode-${mode}`} className="mt-1 h-5 w-5" />
-                        <div className="flex-1">
-                          <div className="font-semibold text-foreground">{mode}</div>
-                          <p className="text-sm text-muted-foreground">
-                            {MODE_DESCRIPTIONS[mode]}
-                          </p>
-                        </div>
-                      </label>
-                    )
-                  )}
+                  {(
+                    [
+                      "Follow Roadmap",
+                      "Make Roadmap",
+                      "Random Search",
+                    ] as StudyMode[]
+                  ).map((mode) => (
+                    <label
+                      key={mode}
+                      className="flex items-start gap-4 p-4 rounded-lg border border-border bg-background cursor-pointer hover:bg-secondary/30 hover:border-primary/50 transition-all"
+                    >
+                      <RadioGroupItem
+                        value={mode}
+                        id={`mode-${mode}`}
+                        className="mt-1 h-5 w-5"
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold text-foreground">{mode}</div>
+                        <p className="text-sm text-muted-foreground">
+                          {MODE_DESCRIPTIONS[mode]}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
                 </div>
               </RadioGroup>
             </div>
 
             {/* Continue Button */}
             <Button
-              onClick={handleContinue}
-              disabled={!canContinue}
+              onClick={handleContinueOnboarding}
+              disabled={!canContinueOnboarding}
               className="w-full h-12 font-mono font-bold text-base"
               data-testid="button-continue"
             >
@@ -196,13 +264,13 @@ export default function Home() {
     );
   }
 
-  // Workspace screen
+  // Workspace screen (after onboarding)
   return (
     <Layout>
       <div className="flex flex-col h-full">
         {/* Context Banner */}
         <div className="px-6 py-3 bg-secondary/40 border-b border-border font-mono text-sm">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3 text-foreground">
               <span>
                 <strong>Exam:</strong> {exam}
@@ -219,11 +287,12 @@ export default function Home() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs font-mono"
-              onClick={() => setStep("onboarding")}
-              data-testid="button-change-context"
+              className="text-xs font-mono gap-2"
+              onClick={() => setShowSettings(true)}
+              data-testid="button-edit-settings"
             >
-              Change
+              <Settings className="h-3 w-3" />
+              Edit
             </Button>
           </div>
         </div>
@@ -347,6 +416,16 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {context && (
+        <SettingsModal
+          open={showSettings}
+          onOpenChange={setShowSettings}
+          context={context}
+          onSave={handleSaveSettings}
+        />
+      )}
     </Layout>
   );
 }

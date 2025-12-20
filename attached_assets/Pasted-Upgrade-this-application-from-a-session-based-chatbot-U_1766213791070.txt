@@ -1,0 +1,143 @@
+Upgrade this application from a session-based chatbot UI to a
+state-aware exam preparation platform with persistent user preferences.
+
+DO NOT rewrite backend AI logic.
+DO NOT break existing functionality.
+Implement UI + state management + minor behavior upgrades only.
+
+---------------------------------------
+CORE BEHAVIOR REQUIREMENTS
+---------------------------------------
+
+1) FIRST-TIME USER ONBOARDING (ONE-TIME ONLY)
+
+When a user opens the app for the FIRST time:
+
+- Show the guided setup screen:
+  • Exam selection
+  • Target year OR time remaining
+  • Study mode (Follow Roadmap / Make Roadmap / Random Search)
+
+- Save this information as USER CONTEXT (persistent state).
+
+- After successful onboarding:
+  • Do NOT show this setup again automatically.
+  • Redirect user to the main workspace.
+
+---------------------------------------
+
+2) PERSISTENT USER CONTEXT (VERY IMPORTANT)
+
+The system must remember:
+- Selected exam
+- Target year or time remaining
+- Selected study mode
+
+This context should:
+- Persist across sessions
+- Persist across page reloads
+- Persist across “New Session” clicks
+
+The system should NOT re-ask exam/target/mode every time.
+
+---------------------------------------
+
+3) EDITABLE SETTINGS (CHANGE LATER)
+
+Add a visible “Change Exam Settings” option (button or link).
+
+When clicked:
+- Allow the user to update:
+  • Exam
+  • Target
+  • Mode
+
+- After updating:
+  • Update stored context
+  • Reflect changes immediately in the app
+  • Update the context banner
+
+---------------------------------------
+
+4) CONTEXT BANNER (ALWAYS VISIBLE)
+
+Show a sticky, non-intrusive banner displaying current context:
+
+Example:
+Exam: JEE | Target: 2026 | Mode: Follow Roadmap
+
+This banner should:
+- Be visible on all main screens
+- Reassure users what context the AI is operating under
+- Include a small “Edit” action
+
+---------------------------------------
+
+5) NO RE-ASKING ON NEW SESSION
+
+Clicking “+ New Session” should:
+- Clear only the conversation history
+- NOT reset exam, target, or mode
+- NOT trigger onboarding again
+
+---------------------------------------
+
+6) SCROLL FIX (CRITICAL UI BUG)
+
+Fix the scrolling issue on the setup screen:
+
+- Ensure the entire onboarding card is scrollable.
+- Prevent content from being clipped on smaller screens.
+- Use proper overflow handling (overflow-y: auto).
+- Ensure mobile and desktop both scroll correctly.
+
+---------------------------------------
+
+7) EXAM-SPECIFIC SYLLABUS AWARENESS
+
+Enhance exam intelligence (no UI needed, logic-level only):
+
+- For AKTU:
+  • Treat syllabus as semester-wise.
+  • AI should understand queries like:
+    “AKTU Semester 3 Engineering Mathematics”
+  • Ask semester only if not already known.
+
+- For JEE / NEET:
+  • Follow NCERT-aligned chapter structure.
+
+- For SSC / GATE / CAT:
+  • Stay exam-relevant and avoid school-level explanations.
+
+---------------------------------------
+
+8) UI QUALITY STANDARD
+
+The UI must feel:
+- Professional
+- Institute-grade
+- High-tech
+- Dashboard-like (not chat-like)
+
+Rules:
+- No conversational onboarding text in the main UI
+- No emojis
+- No casual language
+- Use cards, labels, and sections
+- Clean spacing and typography
+
+---------------------------------------
+
+SUCCESS CRITERIA
+---------------------------------------
+
+After this update:
+
+- A new user sees onboarding ONCE.
+- A returning user goes directly to the workspace.
+- Exam context is remembered and editable.
+- No scrolling issues.
+- The app feels like a real exam preparation system,
+  not a chatbot.
+
+This product should be demo-ready for institutes.
