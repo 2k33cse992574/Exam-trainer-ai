@@ -176,7 +176,33 @@ Topic being studied: ${topic}`;
        await chatStorage.createMessage(conversation.id, "system", systemPrompt);
        
        // Add an initial greeting from the assistant to start the interaction
-       const initialGreeting = `Session initialized for topic: ${topic}. State your first question or problem clearly.`;
+       const initialGreeting = `Welcome to Exam Preparation Accelerator.
+
+This system is designed for structured exam preparation — not random answers.
+
+Step 1: Select your exam
+(JEE / NEET / SSC / AKTU / GATE / CAT)
+
+Step 2: Select your target year or time remaining
+(e.g., 2026, 12 months left)
+
+Step 3: Choose how you want to study:
+
+1) Follow Roadmap
+→ Get a complete, mentor-designed preparation plan.
+
+2) Make Roadmap
+→ Share your plan and get it logically improved.
+
+3) Random Search
+→ Ask any exam-specific doubt instantly.
+
+Please reply in this format:
+Exam: ___
+Target: ___
+Mode: ___
+
+Do not proceed until you provide this information.`;
        await chatStorage.createMessage(conversation.id, "assistant", initialGreeting);
        
        res.json(conversation);
