@@ -46,18 +46,32 @@ export function useConversation(id: number | null) {
   });
 }
 
+interface SessionContextPayload {
+  exam: string;
+  target: string;
+  mode: string;
+  query: string;
+}
+
 export function useStartSession() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (topic: string) => {
+    mutationFn: async (payload: SessionContextPayload) => {
       // Create a conversation via the standard chat endpoint
-      // We can use the generic chat endpoint to start a session
+      // Send structured context to the backend
+      const title = `${payload.exam} - ${payload.target} - ${payload.mode}`;
       const res = await fetch("/api/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: topic }),
+        body: JSON.stringify({
+          title,
+          exam: payload.exam,
+          target: payload.target,
+          mode: payload.mode,
+          initialQuery: payload.query,
+        }),
       });
       
       if (!res.ok) throw new Error("Failed to start session");
@@ -67,7 +81,7 @@ export function useStartSession() {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       toast({
         title: "Session Initialized",
-        description: `Topic: ${newConversation.title}`,
+        description: `Preparation plan: ${newConversation.title}`,
       });
     },
     onError: () => {

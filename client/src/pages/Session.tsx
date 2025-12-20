@@ -31,8 +31,9 @@ export default function Session() {
 
   // Initial greeting trigger if empty
   useEffect(() => {
-    if (conversation && conversation.messages.length === 0 && !isStreaming) {
-      sendMessage(`I want to study ${conversation.title}. Please start the session according to NCERT standards.`);
+    if (conversation && conversation.messages.length === 2 && !isStreaming) {
+      // Conversation has system message + initial assistant message, time to get user's actual query
+      // We'll let the user provide their first query instead of auto-sending
     }
   }, [conversation?.id, conversation?.messages.length]); 
 
@@ -67,17 +68,24 @@ export default function Session() {
   return (
     <Layout>
       <div className="flex flex-col h-full">
+        {/* Context Banner */}
+        <div className="px-6 py-2 bg-secondary/40 border-b border-border font-mono text-xs text-muted-foreground">
+          <div className="max-w-6xl mx-auto">
+            {conversation.title}
+          </div>
+        </div>
+
         {/* Header */}
         <header className="px-6 py-4 border-b border-border bg-card/50 backdrop-blur flex items-center justify-between">
           <div>
-            <h2 className="font-mono font-bold text-lg">{conversation.title}</h2>
+            <h2 className="font-mono font-bold text-lg">Preparation Session</h2>
             <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
               <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               SESSION ACTIVE
             </div>
           </div>
           <Button variant="outline" size="sm" className="font-mono text-xs uppercase" disabled>
-            Strict Mode
+            Structured Mode
           </Button>
         </header>
 

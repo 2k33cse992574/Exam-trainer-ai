@@ -4,112 +4,348 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStartSession } from "@/hooks/use-academic";
 import { useLocation } from "wouter";
-import { BrainCircuit, ArrowRight, Loader2, BookOpen, Atom } from "lucide-react";
+import { Loader2, ArrowRight, BookOpen, Zap, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+type Exam = "JEE" | "NEET" | "SSC" | "AKTU" | "GATE" | "CAT";
+type StudyMode = "Follow Roadmap" | "Make Roadmap" | "Random Search";
+
+const EXAMS: Exam[] = ["JEE", "NEET", "SSC", "AKTU", "GATE", "CAT"];
+const TARGET_YEARS = ["2025", "2026", "2027"];
+const TIME_OPTIONS = ["3 months", "6 months", "12 months"];
+
+const MODE_DESCRIPTIONS: Record<StudyMode, string> = {
+  "Follow Roadmap": "Get a complete, mentor-designed preparation plan.",
+  "Make Roadmap": "Create your own plan and get it logically improved.",
+  "Random Search": "Ask exam-specific doubts instantly.",
+};
 
 export default function Home() {
-  const [topic, setTopic] = useState("");
+  const [step, setStep] = useState<"onboarding" | "workspace">("onboarding");
+  const [exam, setExam] = useState<Exam | "">("");
+  const [target, setTarget] = useState<"year" | "time">("year");
+  const [targetValue, setTargetValue] = useState("");
+  const [studyMode, setStudyMode] = useState<StudyMode | "">("");
+  const [query, setQuery] = useState("");
   const [, setLocation] = useLocation();
   const { mutate: startSession, isPending } = useStartSession();
 
-  const handleStart = (e: React.FormEvent) => {
+  const handleContinue = () => {
+    if (!exam || !targetValue || !studyMode) return;
+    setStep("workspace");
+  };
+
+  const handleStartSession = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topic.trim()) return;
-    
-    startSession(topic, {
+    if (!query.trim()) return;
+
+    const contextPayload = {
+      exam: exam as Exam,
+      target: targetValue,
+      mode: studyMode as StudyMode,
+      query: query.trim(),
+    };
+
+    startSession(contextPayload, {
       onSuccess: (session) => {
-        setLocation(`/session/${session.id}`);
+        setLocation(`/session/${session.id}`, {
+          state: {
+            exam,
+            target: targetValue,
+            mode: studyMode,
+          },
+        });
       },
     });
   };
 
-  const suggestedTopics = [
-    "Rotational Motion",
-    "Electrostatics",
-    "Organic Chemistry",
-    "Thermodynamics",
-    "Genetics",
-    "Calculus Integration"
-  ];
+  const canContinue = exam && targetValue && studyMode;
+  const canStart = query.trim() && !isPending;
 
-  return (
-    <Layout>
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 max-w-4xl mx-auto w-full animate-in fade-in duration-500">
-        
-        <div className="text-center space-y-6 mb-12">
-          <div className="inline-flex items-center justify-center p-4 rounded-2xl bg-primary/5 text-primary mb-4 ring-1 ring-border shadow-lg">
-            <BrainCircuit className="h-12 w-12" />
+  // Onboarding screen
+  if (step === "onboarding") {
+    return (
+      <Layout>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 max-w-4xl mx-auto w-full">
+          {/* Header */}
+          <div className="text-center space-y-3 mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold font-mono tracking-tight text-foreground">
+              Exam Preparation Accelerator
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Structured preparation for competitive exams — not random answers.
+            </p>
           </div>
-          
-          <h1 className="text-4xl md:text-5xl font-mono font-bold tracking-tight text-foreground">
-            Academic Performance <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/50">
-              Accelerator
-            </span>
-          </h1>
-          
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Strict, exam-oriented AI training for NEET/JEE aspirants. 
-            Select a topic to begin rigorous conceptual validation and problem solving.
-          </p>
-        </div>
 
-        <Card className="w-full max-w-lg p-2 bg-card/50 backdrop-blur border-border shadow-2xl">
-          <form onSubmit={handleStart} className="flex gap-2">
-            <Input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="Enter topic (e.g., Fluid Mechanics)..."
-              className="h-14 px-6 text-lg bg-background border-none focus-visible:ring-0 shadow-none font-mono"
-              disabled={isPending}
-            />
-            <Button 
-              type="submit" 
-              size="lg" 
-              className="h-14 px-8 shrink-0 font-mono font-bold tracking-wide"
-              disabled={!topic.trim() || isPending}
-            >
-              {isPending ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  BEGIN
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </>
-              )}
-            </Button>
-          </form>
-        </Card>
+          {/* Setup Card */}
+          <Card className="w-full max-w-2xl p-8 bg-card/50 backdrop-blur border-border shadow-xl space-y-8">
+            {/* Exam Selector */}
+            <div className="space-y-3">
+              <Label htmlFor="exam-select" className="text-base font-mono font-semibold">
+                Step 1: Select your exam
+              </Label>
+              <Select value={exam} onValueChange={(value) => setExam(value as Exam)}>
+                <SelectTrigger id="exam-select" className="h-12 px-4 text-base border-border bg-background">
+                  <SelectValue placeholder="Choose your exam..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {EXAMS.map((e) => (
+                    <SelectItem key={e} value={e}>
+                      {e}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className="mt-12 w-full max-w-2xl">
-          <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest text-center mb-6">
-            Recommended Modules
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {suggestedTopics.map((t) => (
-              <button
-                key={t}
-                onClick={() => {
-                  setTopic(t);
-                  // Optional: auto-submit
-                }}
-                className="group flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-secondary/50 hover:border-primary/50 transition-all text-left"
-              >
-                <div className="p-2 rounded bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                  {t.includes("Chemistry") || t.includes("Genetics") ? (
-                    <Atom className="h-4 w-4" />
-                  ) : (
-                    <BookOpen className="h-4 w-4" />
+            {/* Target Selector */}
+            <div className="space-y-4">
+              <Label className="text-base font-mono font-semibold">
+                Step 2: Select your target year or time remaining
+              </Label>
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="target-type" className="text-sm text-muted-foreground">
+                    Type
+                  </Label>
+                  <Select value={target} onValueChange={(value: any) => setTarget(value)}>
+                    <SelectTrigger id="target-type" className="h-10 px-3 text-sm bg-background border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="year">Target Year</SelectItem>
+                      <SelectItem value="time">Time Remaining</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="target-value" className="text-sm text-muted-foreground">
+                    Value
+                  </Label>
+                  <Select value={targetValue} onValueChange={setTargetValue}>
+                    <SelectTrigger id="target-value" className="h-10 px-3 text-sm bg-background border-border">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {target === "year"
+                        ? TARGET_YEARS.map((y) => (
+                            <SelectItem key={y} value={y}>
+                              {y}
+                            </SelectItem>
+                          ))
+                        : TIME_OPTIONS.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Study Mode Selector */}
+            <div className="space-y-4">
+              <Label className="text-base font-mono font-semibold">
+                Step 3: Choose how you want to study
+              </Label>
+              <RadioGroup value={studyMode} onValueChange={(value: any) => setStudyMode(value)}>
+                <div className="space-y-3">
+                  {(["Follow Roadmap", "Make Roadmap", "Random Search"] as StudyMode[]).map(
+                    (mode) => (
+                      <label
+                        key={mode}
+                        className="flex items-start gap-4 p-4 rounded-lg border border-border bg-background cursor-pointer hover:bg-secondary/30 hover:border-primary/50 transition-all"
+                      >
+                        <RadioGroupItem value={mode} id={`mode-${mode}`} className="mt-1 h-5 w-5" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-foreground">{mode}</div>
+                          <p className="text-sm text-muted-foreground">
+                            {MODE_DESCRIPTIONS[mode]}
+                          </p>
+                        </div>
+                      </label>
+                    )
                   )}
                 </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                  {t}
-                </span>
-              </button>
-            ))}
+              </RadioGroup>
+            </div>
+
+            {/* Continue Button */}
+            <Button
+              onClick={handleContinue}
+              disabled={!canContinue}
+              className="w-full h-12 font-mono font-bold text-base"
+              data-testid="button-continue"
+            >
+              Continue
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Workspace screen
+  return (
+    <Layout>
+      <div className="flex flex-col h-full">
+        {/* Context Banner */}
+        <div className="px-6 py-3 bg-secondary/40 border-b border-border font-mono text-sm">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 text-foreground">
+              <span>
+                <strong>Exam:</strong> {exam}
+              </span>
+              <span className="text-muted-foreground">|</span>
+              <span>
+                <strong>Target:</strong> {targetValue}
+              </span>
+              <span className="text-muted-foreground">|</span>
+              <span>
+                <strong>Mode:</strong> {studyMode}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs font-mono"
+              onClick={() => setStep("onboarding")}
+              data-testid="button-change-context"
+            >
+              Change
+            </Button>
           </div>
         </div>
 
+        {/* Main Workspace */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
+          <div className="w-full max-w-3xl space-y-8">
+            {/* Mode-specific heading and input */}
+            {studyMode === "Follow Roadmap" && (
+              <>
+                <div className="space-y-3 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-2">
+                    <BookOpen className="h-7 w-7" />
+                  </div>
+                  <h2 className="text-3xl font-bold font-mono">Generate Your Roadmap</h2>
+                  <p className="text-muted-foreground">
+                    Receive a complete, mentor-designed preparation plan tailored to your exam
+                    and timeline.
+                  </p>
+                </div>
+                <form onSubmit={handleStartSession} className="space-y-4">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full h-12 font-mono font-bold text-base"
+                    disabled={isPending}
+                    data-testid="button-generate-roadmap"
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        Generate My Preparation Roadmap
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </>
+            )}
+
+            {studyMode === "Make Roadmap" && (
+              <>
+                <div className="space-y-3 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-2">
+                    <Zap className="h-7 w-7" />
+                  </div>
+                  <h2 className="text-3xl font-bold font-mono">Optimize Your Plan</h2>
+                  <p className="text-muted-foreground">
+                    Share your preparation plan and get it logically improved.
+                  </p>
+                </div>
+                <form onSubmit={handleStartSession} className="space-y-4">
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Describe your current preparation plan..."
+                    className="h-12 px-4 text-base bg-background border-border focus-visible:ring-1 focus-visible:ring-primary/50"
+                    disabled={isPending}
+                    data-testid="input-prep-plan"
+                  />
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full h-12 font-mono font-bold text-base"
+                    disabled={!canStart}
+                    data-testid="button-optimize-plan"
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        Optimize My Plan
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </>
+            )}
+
+            {studyMode === "Random Search" && (
+              <>
+                <div className="space-y-3 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-2">
+                    <Search className="h-7 w-7" />
+                  </div>
+                  <h2 className="text-3xl font-bold font-mono">Ask Your Question</h2>
+                  <p className="text-muted-foreground">
+                    Ask any exam-specific doubt or concept question instantly.
+                  </p>
+                </div>
+                <form onSubmit={handleStartSession} className="space-y-4">
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Ask an exam-specific question..."
+                    className="h-12 px-4 text-base bg-background border-border focus-visible:ring-1 focus-visible:ring-primary/50"
+                    disabled={isPending}
+                    data-testid="input-question"
+                  />
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full h-12 font-mono font-bold text-base"
+                    disabled={!canStart}
+                    data-testid="button-get-answer"
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        Get Answer
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </Layout>
   );

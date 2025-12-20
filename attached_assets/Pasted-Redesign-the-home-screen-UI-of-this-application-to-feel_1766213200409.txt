@@ -1,0 +1,144 @@
+Redesign the home screen UI of this application to feel like a premium,
+high-tech exam preparation platform (not a chatbot).
+
+GOAL:
+The UI should guide students step-by-step into structured exam preparation
+instead of showing a generic “Enter topic” chat input.
+
+DO NOT change backend APIs or AI logic.
+Only rebuild the frontend UI and how user context is collected and sent.
+
+-----------------------------------
+NEW HOME SCREEN STRUCTURE
+-----------------------------------
+
+1) HEADER
+Title: “Exam Preparation Accelerator”
+Subtitle: “Structured preparation for competitive exams — not random answers.”
+
+Clean, minimal, professional styling.
+No emojis. No casual language.
+
+-----------------------------------
+
+2) GUIDED SETUP CARD (MAIN CHANGE)
+
+Replace the single “Enter topic” input with a setup card containing:
+
+A) Exam Selector (Dropdown)
+Options:
+- JEE
+- NEET
+- SSC
+- AKTU
+- GATE
+- CAT
+
+Label text:
+“Select your exam”
+
+B) Target Selector
+Either:
+- Target Year (e.g., 2025, 2026, 2027)
+OR
+- Time remaining (e.g., 6 months, 12 months)
+
+Label text:
+“Select your target year or time remaining”
+
+C) Study Mode Selector (Radio buttons or cards)
+
+Options:
+1. Follow Roadmap
+   Helper text:
+   “Get a mentor-designed preparation plan based on your exam and time left.”
+
+2. Make Roadmap
+   Helper text:
+   “Create your own plan and get it logically improved.”
+
+3. Random Search
+   Helper text:
+   “Ask exam-specific doubts instantly.”
+
+Primary CTA button:
+“Continue”
+
+-----------------------------------
+
+3) CONTEXT BANNER (AFTER CONTINUE)
+
+After the user clicks “Continue”, show a subtle context banner at the top:
+
+Example:
+“Exam: JEE  |  Target: 2026  |  Mode: Follow Roadmap”
+
+This banner should persist so users always know their context.
+
+-----------------------------------
+
+4) MODE-BASED MAIN WORKSPACE
+
+Based on selected mode, change the main content area:
+
+• Follow Roadmap:
+  Show a button:
+  “Generate My Preparation Roadmap”
+
+• Make Roadmap:
+  Show small input fields:
+  - Hours per day
+  - Weak subjects (optional)
+  Button:
+  “Optimize My Plan”
+
+• Random Search:
+  Show a clean input box with label:
+  “Ask an exam-specific question”
+  (Do NOT use “Enter topic” wording)
+
+-----------------------------------
+
+5) INPUT PAYLOAD (IMPORTANT)
+
+When sending data to the backend / AI, always send structured context:
+
+Exam: <selected exam>
+Target: <year or months>
+Mode: <selected mode>
+User Query: <user input or action>
+
+Do NOT auto-prepend phrases like:
+- “I want to study…”
+- “Please start the session…”
+
+Treat user input as a direct academic command.
+
+-----------------------------------
+
+6) DESIGN GUIDELINES
+
+- Clean, minimal layout
+- Card-based UI (not chat bubbles)
+- Neutral colors (white/gray) with one accent color
+- Professional typography
+- No conversational UI elements
+
+-----------------------------------
+
+7) DO NOT DO
+
+- Do NOT keep the old “Enter topic (e.g., Fluid Mechanics)” placeholder
+- Do NOT expose system messages or onboarding text in the center UI
+- Do NOT add animations, emojis, or chat-style fluff
+
+-----------------------------------
+
+SUCCESS CRITERIA:
+
+When a user opens the app, it should feel like:
+- an exam preparation system
+- a structured academic tool
+- something a coaching institute would trust
+
+Not like a chatbot.
