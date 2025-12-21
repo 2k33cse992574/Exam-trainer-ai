@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 
-export type Exam = "JEE" | "NEET" | "SSC" | "AKTU" | "GATE" | "CAT";
-export type StudyMode = "Follow Roadmap" | "Make Roadmap" | "Random Search";
-
 export interface UserContext {
-  exam: Exam;
+  exam: string;
   target: string; // e.g., "2025" or "6 months"
-  mode: StudyMode;
+  mode: string;
 }
 
 const STORAGE_KEY = "user-context";
