@@ -49,8 +49,8 @@ export function useConversation(id: number | null) {
 interface SessionContextPayload {
   exam: string;
   target: string;
-  mode: string;
-  query: string;
+  zone: string;
+  query?: string;
 }
 
 export function useStartSession() {
@@ -61,7 +61,7 @@ export function useStartSession() {
     mutationFn: async (payload: SessionContextPayload) => {
       // Create a conversation via the standard chat endpoint
       // Send structured context to the backend
-      const title = `${payload.exam} - ${payload.target} - ${payload.mode}`;
+      const title = `${payload.exam} - ${payload.target}`;
       const res = await fetch("/api/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -69,8 +69,8 @@ export function useStartSession() {
           title,
           exam: payload.exam,
           target: payload.target,
-          mode: payload.mode,
-          initialQuery: payload.query,
+          zone: payload.zone,
+          initialQuery: payload.query || null,
         }),
       });
       
