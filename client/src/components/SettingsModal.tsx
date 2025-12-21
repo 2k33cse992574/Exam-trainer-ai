@@ -14,12 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface UserContext {
   exam: string;
   target: string;
-  mode: string;
 }
 
 interface SettingsModalProps {
@@ -30,17 +28,10 @@ interface SettingsModalProps {
 }
 
 type Exam = "JEE" | "NEET" | "SSC" | "AKTU" | "GATE" | "CAT";
-type StudyMode = "Follow Roadmap" | "Make Roadmap" | "Random Search";
 
 const EXAMS: Exam[] = ["JEE", "NEET", "SSC", "AKTU", "GATE", "CAT"];
 const TARGET_YEARS = ["2025", "2026", "2027"];
 const TIME_OPTIONS = ["3 months", "6 months", "12 months"];
-
-const MODE_DESCRIPTIONS: Record<StudyMode, string> = {
-  "Follow Roadmap": "Get a complete, mentor-designed preparation plan.",
-  "Make Roadmap": "Create your own plan and get it logically improved.",
-  "Random Search": "Ask exam-specific doubts instantly.",
-};
 
 export function SettingsModal({
   open,
@@ -53,18 +44,16 @@ export function SettingsModal({
     TARGET_YEARS.includes(context.target) ? "year" : "time"
   );
   const [targetValue, setTargetValue] = useState(context.target);
-  const [mode, setMode] = useState<string>(context.mode);
 
   const handleSave = () => {
     onSave({
       exam,
       target: targetValue,
-      mode,
     });
     onOpenChange(false);
   };
 
-  const canSave = exam && targetValue && mode;
+  const canSave = exam && targetValue;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,39 +133,6 @@ export function SettingsModal({
                 </Select>
               </div>
             </div>
-          </div>
-
-          {/* Study Mode Selector */}
-          <div className="space-y-4">
-            <Label className="text-base font-mono font-semibold">Study Mode</Label>
-            <RadioGroup value={mode} onValueChange={setMode}>
-              <div className="space-y-3">
-                {(
-                  [
-                    "Follow Roadmap",
-                    "Make Roadmap",
-                    "Random Search",
-                  ] as StudyMode[]
-                ).map((m) => (
-                  <label
-                    key={m}
-                    className="flex items-start gap-4 p-3 rounded-lg border border-border bg-background cursor-pointer hover:bg-secondary/30 hover:border-primary/50 transition-all"
-                  >
-                    <RadioGroupItem
-                      value={m}
-                      id={`settings-mode-${m}`}
-                      className="mt-1 h-4 w-4"
-                    />
-                    <div className="flex-1 text-sm">
-                      <div className="font-semibold text-foreground">{m}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {MODE_DESCRIPTIONS[m]}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </RadioGroup>
           </div>
 
           {/* Action Buttons */}

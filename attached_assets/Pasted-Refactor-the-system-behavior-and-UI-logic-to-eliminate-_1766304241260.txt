@@ -1,0 +1,132 @@
+Refactor the system behavior and UI logic to eliminate system-prompt leakage
+and redesign roadmap handling as feature-based flows instead of study modes.
+
+DO NOT change backend AI capability.
+DO NOT show system instructions in user-visible responses.
+
+---------------------------------------
+CRITICAL FIX 1: HIDE ALL SYSTEM PROMPT CONTENT
+---------------------------------------
+
+Under NO circumstances should the user ever see:
+
+- System identity text
+- Supported exam lists
+- Internal rules
+- Mode descriptions
+- Tone instructions
+- “You are Exam Preparation Accelerator…” style messages
+
+The system prompt is INTERNAL ONLY.
+
+User-visible output must contain ONLY:
+- Academic explanations
+- Roadmaps (when explicitly requested)
+- Clear answers to questions
+
+If system context needs to be acknowledged, do it implicitly,
+never by printing context blocks.
+
+---------------------------------------
+CRITICAL FIX 2: DEFAULT BEHAVIOR = DOUBT SOLVER
+---------------------------------------
+
+The default behavior of the AI should always be:
+
+- Exam-aware doubt solver
+- Concept explanation
+- Numerical problem solving
+- Theory clarification
+
+This is the PRIMARY experience.
+
+No roadmap logic should activate automatically.
+
+---------------------------------------
+ROADMAPS AS FEATURES (NOT MODES)
+---------------------------------------
+
+Redesign “Follow Roadmap” and “Make Roadmap” as EXPLICIT FEATURES.
+
+They should activate ONLY when the user clicks:
+
+- “Generate Preparation Roadmap”
+- “Create / Improve My Study Plan”
+
+Until then:
+- The AI behaves purely as an exam-specific doubt solver.
+
+---------------------------------------
+FEATURE ZONES (LOGIC)
+---------------------------------------
+
+1) Default Zone: Study / Doubt Solving
+- User asks questions freely.
+- AI answers strictly within selected exam context.
+- No mention of roadmaps unless asked.
+
+2) Follow Roadmap Zone (explicit entry)
+- Triggered only when user selects:
+  “Generate My Preparation Roadmap”
+- AI switches to mentor-style planning.
+- Produces structured, time-based plans.
+
+3) Make Roadmap Zone (explicit entry)
+- Triggered only when user selects:
+  “Optimize My Study Plan”
+- AI asks limited clarifying questions.
+- Refines the student’s plan logically.
+
+---------------------------------------
+USER CONTEXT HANDLING (SILENT)
+---------------------------------------
+
+User context (exam, target, semester, etc.) must be:
+
+- Used internally
+- Never printed as a block
+- Never announced before answers
+
+Example:
+
+❌ BAD:
+“Your context: Exam JEE, Target 2026…”
+
+✅ GOOD:
+Just answer the question correctly at JEE level.
+
+---------------------------------------
+UI COPY CHANGES (IMPORTANT)
+---------------------------------------
+
+REMOVE:
+- “Follow Roadmap” / “Make Roadmap” as default options
+
+ADD:
+Primary buttons:
+- “Ask a Question”
+- “Generate Preparation Roadmap”
+- “Optimize My Study Plan”
+
+This makes the product intuitive and professional.
+
+---------------------------------------
+AKTU SYLLABUS INTELLIGENCE
+---------------------------------------
+
+For AKTU:
+- Treat syllabus as semester-wise.
+- If semester is missing, ask once and remember it.
+- Do NOT repeatedly ask for semester.
+
+---------------------------------------
+SUCCESS CRITERIA
+---------------------------------------
+
+After this update:
+
+- No system text appears in answers.
+- Students see clean academic responses only.
+- Doubt solving feels instant and natural.
+- Roadmaps feel like premium features, not forced flows.
+- The app feels like a real exam platform used by institutes.

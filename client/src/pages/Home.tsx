@@ -15,30 +15,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SettingsModal } from "@/components/SettingsModal";
 
 type Exam = "JEE" | "NEET" | "SSC" | "AKTU" | "GATE" | "CAT";
-type StudyMode = "Follow Roadmap" | "Make Roadmap" | "Random Search";
 
 const EXAMS: Exam[] = ["JEE", "NEET", "SSC", "AKTU", "GATE", "CAT"];
 const TARGET_YEARS = ["2025", "2026", "2027"];
 const TIME_OPTIONS = ["3 months", "6 months", "12 months"];
-
-const MODE_DESCRIPTIONS: Record<StudyMode, string> = {
-  "Follow Roadmap": "Get a complete, mentor-designed preparation plan.",
-  "Make Roadmap": "Create your own plan and get it logically improved.",
-  "Random Search": "Ask exam-specific doubts instantly.",
-};
 
 export default function Home() {
   const { context, hasOnboarded, isLoading, saveContext, updateContext } = useUserContext();
   const [exam, setExam] = useState<Exam | "">("");
   const [target, setTarget] = useState<"year" | "time">("year");
   const [targetValue, setTargetValue] = useState("");
-  const [studyMode, setStudyMode] = useState<StudyMode | "">("");
   const [query, setQuery] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [currentZone, setCurrentZone] = useState<"ask" | "roadmap" | "optimize" | null>(null);
   const [, setLocation] = useLocation();
   const { mutate: startSession, isPending } = useStartSession();
 
@@ -48,33 +40,48 @@ export default function Home() {
 
     if (context && hasOnboarded) {
       // User has completed onboarding, restore context
-      setExam(context.exam);
+      setExam(context.exam as Exam);
       setTargetValue(context.target);
-      setStudyMode(context.mode);
       setTarget(TARGET_YEARS.includes(context.target) ? "year" : "time");
     }
   }, [context, hasOnboarded, isLoading]);
 
   const handleContinueOnboarding = () => {
-    if (!exam || !targetValue || !studyMode) return;
+    if (!exam || !targetValue) return;
 
     saveContext({
       exam: exam as Exam,
       target: targetValue,
-      mode: studyMode as StudyMode,
     });
   };
 
-  const handleStartSession = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim() || !exam || !targetValue || !studyMode) return;
+  const handleStartSession = (zone: "ask" | "roadmap" | "optimize") => {
+    setCurrentZone(zone);
+    let contextPayload: any;
 
-    const contextPayload = {
-      exam: exam as Exam,
-      target: targetValue,
-      mode: studyMode as StudyMode,
-      query: query.trim(),
-    };
+    if (zone === "roadmap") {
+      contextPayload = {
+        exam: exam as Exam,
+        target: targetValue,
+        zone: "roadmap",
+      };
+    } else if (zone === "optimize") {
+      if (!query.trim()) return;
+      contextPayload = {
+        exam: exam as Exam,
+        target: targetValue,
+        zone: "optimize",
+        query: query.trim(),
+      };
+    } else {
+      if (!query.trim()) return;
+      contextPayload = {
+        exam: exam as Exam,
+        target: targetValue,
+        zone: "ask",
+        query: query.trim(),
+      };
+    }
 
     startSession(contextPayload, {
       onSuccess: (session) => {
@@ -82,7 +89,7 @@ export default function Home() {
           state: {
             exam,
             target: targetValue,
-            mode: studyMode,
+            zone,
           },
         });
       },
@@ -92,7 +99,6 @@ export default function Home() {
   const handleSaveSettings = (newContext: any) => {
     setExam(newContext.exam);
     setTargetValue(newContext.target);
-    setStudyMode(newContext.mode);
     setTarget(TARGET_YEARS.includes(newContext.target) ? "year" : "time");
     updateContext(newContext);
   };
@@ -107,11 +113,10 @@ export default function Home() {
     );
   }
 
-  const canContinueOnboarding = exam && targetValue && studyMode;
-  const canStart = query.trim() && !isPending;
-
   // First-time onboarding screen
   if (!hasOnboarded || !context) {
+    const canContinueOnboarding = exam && targetValue;
+
     return (
       <Layout>
         <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 max-w-4xl mx-auto w-full overflow-y-auto">
@@ -210,44 +215,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Study Mode Selector */}
-            <div className="space-y-4">
-              <Label className="text-base font-mono font-semibold">
-                Step 3: Choose how you want to study
-              </Label>
-              <RadioGroup
-                value={studyMode}
-                onValueChange={(value: any) => setStudyMode(value)}
-              >
-                <div className="space-y-3">
-                  {(
-                    [
-                      "Follow Roadmap",
-                      "Make Roadmap",
-                      "Random Search",
-                    ] as StudyMode[]
-                  ).map((mode) => (
-                    <label
-                      key={mode}
-                      className="flex items-start gap-4 p-4 rounded-lg border border-border bg-background cursor-pointer hover:bg-secondary/30 hover:border-primary/50 transition-all"
-                    >
-                      <RadioGroupItem
-                        value={mode}
-                        id={`mode-${mode}`}
-                        className="mt-1 h-5 w-5"
-                      />
-                      <div className="flex-1">
-                        <div className="font-semibold text-foreground">{mode}</div>
-                        <p className="text-sm text-muted-foreground">
-                          {MODE_DESCRIPTIONS[mode]}
-                        </p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </RadioGroup>
-            </div>
-
             {/* Continue Button */}
             <Button
               onClick={handleContinueOnboarding}
@@ -265,6 +232,9 @@ export default function Home() {
   }
 
   // Workspace screen (after onboarding)
+  const canAskQuestion = query.trim() && !isPending;
+  const canOptimizePlan = query.trim() && !isPending;
+
   return (
     <Layout>
       <div className="flex flex-col h-full">
@@ -278,10 +248,6 @@ export default function Home() {
               <span className="text-muted-foreground">|</span>
               <span>
                 <strong>Target:</strong> {targetValue}
-              </span>
-              <span className="text-muted-foreground">|</span>
-              <span>
-                <strong>Mode:</strong> {studyMode}
               </span>
             </div>
             <Button
@@ -300,20 +266,85 @@ export default function Home() {
         {/* Main Workspace */}
         <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
           <div className="w-full max-w-3xl space-y-8">
-            {/* Mode-specific heading and input */}
-            {studyMode === "Follow Roadmap" && (
+            {/* Feature Selection Grid */}
+            {!currentZone ? (
+              <>
+                <div className="text-center space-y-3 mb-12">
+                  <h2 className="text-3xl font-bold font-mono">How can we help?</h2>
+                  <p className="text-muted-foreground">
+                    Choose how you'd like to prepare for your exam
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Ask a Question Button */}
+                  <button
+                    onClick={() => setCurrentZone("ask")}
+                    className="p-6 rounded-lg border border-border bg-background hover:bg-secondary/30 hover:border-primary/50 transition-all text-left group"
+                    data-testid="button-feature-ask"
+                  >
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary mb-3 group-hover:scale-105 transition-transform">
+                      <Search className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-semibold text-foreground mb-2">Ask a Question</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Get instant answers to doubts and concept questions.
+                    </p>
+                  </button>
+
+                  {/* Generate Roadmap Button */}
+                  <button
+                    onClick={() => setCurrentZone("roadmap")}
+                    className="p-6 rounded-lg border border-border bg-background hover:bg-secondary/30 hover:border-primary/50 transition-all text-left group"
+                    data-testid="button-feature-roadmap"
+                  >
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary mb-3 group-hover:scale-105 transition-transform">
+                      <BookOpen className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-semibold text-foreground mb-2">
+                      Generate Roadmap
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Get a complete preparation plan from a mentor.
+                    </p>
+                  </button>
+
+                  {/* Optimize Plan Button */}
+                  <button
+                    onClick={() => setCurrentZone("optimize")}
+                    className="p-6 rounded-lg border border-border bg-background hover:bg-secondary/30 hover:border-primary/50 transition-all text-left group"
+                    data-testid="button-feature-optimize"
+                  >
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary mb-3 group-hover:scale-105 transition-transform">
+                      <Zap className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-semibold text-foreground mb-2">
+                      Optimize Plan
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Improve your existing study plan.
+                    </p>
+                  </button>
+                </div>
+              </>
+            ) : currentZone === "roadmap" ? (
               <>
                 <div className="space-y-3 text-center">
                   <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-2">
                     <BookOpen className="h-7 w-7" />
                   </div>
-                  <h2 className="text-3xl font-bold font-mono">Generate Your Roadmap</h2>
+                  <h2 className="text-3xl font-bold font-mono">Your Preparation Roadmap</h2>
                   <p className="text-muted-foreground">
-                    Receive a complete, mentor-designed preparation plan tailored to your exam
-                    and timeline.
+                    A complete, mentor-designed plan tailored to your exam and timeline.
                   </p>
                 </div>
-                <form onSubmit={handleStartSession} className="space-y-4">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleStartSession("roadmap");
+                  }}
+                  className="space-y-4"
+                >
                   <Button
                     type="submit"
                     size="lg"
@@ -325,16 +356,23 @@ export default function Home() {
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
                       <>
-                        Generate My Preparation Roadmap
+                        Generate My Roadmap
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setCurrentZone(null)}
+                    disabled={isPending}
+                  >
+                    Back
+                  </Button>
                 </form>
               </>
-            )}
-
-            {studyMode === "Make Roadmap" && (
+            ) : currentZone === "optimize" ? (
               <>
                 <div className="space-y-3 text-center">
                   <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-2">
@@ -342,10 +380,16 @@ export default function Home() {
                   </div>
                   <h2 className="text-3xl font-bold font-mono">Optimize Your Plan</h2>
                   <p className="text-muted-foreground">
-                    Share your preparation plan and get it logically improved.
+                    Share your current plan and get logical improvements.
                   </p>
                 </div>
-                <form onSubmit={handleStartSession} className="space-y-4">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleStartSession("optimize");
+                  }}
+                  className="space-y-4"
+                >
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -358,23 +402,30 @@ export default function Home() {
                     type="submit"
                     size="lg"
                     className="w-full h-12 font-mono font-bold text-base"
-                    disabled={!canStart}
+                    disabled={!canOptimizePlan}
                     data-testid="button-optimize-plan"
                   >
                     {isPending ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
                       <>
-                        Optimize My Plan
+                        Get Suggestions
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setCurrentZone(null)}
+                    disabled={isPending}
+                  >
+                    Back
+                  </Button>
                 </form>
               </>
-            )}
-
-            {studyMode === "Random Search" && (
+            ) : (
               <>
                 <div className="space-y-3 text-center">
                   <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-2">
@@ -382,10 +433,16 @@ export default function Home() {
                   </div>
                   <h2 className="text-3xl font-bold font-mono">Ask Your Question</h2>
                   <p className="text-muted-foreground">
-                    Ask any exam-specific doubt or concept question instantly.
+                    Get instant, structured answers to any exam-related doubt.
                   </p>
                 </div>
-                <form onSubmit={handleStartSession} className="space-y-4">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleStartSession("ask");
+                  }}
+                  className="space-y-4"
+                >
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -398,7 +455,7 @@ export default function Home() {
                     type="submit"
                     size="lg"
                     className="w-full h-12 font-mono font-bold text-base"
-                    disabled={!canStart}
+                    disabled={!canAskQuestion}
                     data-testid="button-get-answer"
                   >
                     {isPending ? (
@@ -409,6 +466,15 @@ export default function Home() {
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setCurrentZone(null)}
+                    disabled={isPending}
+                  >
+                    Back
                   </Button>
                 </form>
               </>

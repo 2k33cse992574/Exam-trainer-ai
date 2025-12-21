@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 export interface UserContext {
   exam: string;
   target: string; // e.g., "2025" or "6 months"
-  mode: string;
 }
 
 const STORAGE_KEY = "user-context";
