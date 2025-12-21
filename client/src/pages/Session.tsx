@@ -65,6 +65,25 @@ export default function Session() {
     return <NotFound />;
   }
 
+  // Filter out system messages, only show user and assistant messages
+  const visibleMessages = conversation.messages.filter(msg => {
+    // Only render user and assistant messages
+    if (msg.role !== "user" && msg.role !== "assistant") return false;
+    
+    // Additional safety: filter out messages containing meta keywords
+    const metaKeywords = [
+      "You are",
+      "ABSOLUTE RULE",
+      "CORE BEHAVIOR",
+      "SUPPORTED EXAMS",
+      "ZONE BEHAVIOR",
+      "SYSTEM",
+      "internal reasoning engine",
+    ];
+    
+    return !metaKeywords.some(keyword => msg.content.includes(keyword));
+  });
+
   return (
     <Layout>
       <div className="flex flex-col h-full">
@@ -92,7 +111,7 @@ export default function Session() {
         {/* Messages */}
         <ScrollArea className="flex-1 p-4 md:p-8" ref={scrollRef}>
           <div className="max-w-4xl mx-auto space-y-8 pb-8">
-            {conversation.messages.map((msg, idx) => (
+            {visibleMessages.map((msg, idx) => (
               <div
                 key={msg.id || idx}
                 className={cn(
